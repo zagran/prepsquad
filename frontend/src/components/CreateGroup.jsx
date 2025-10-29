@@ -1,4 +1,16 @@
 import { useState } from 'react'
+import {
+  Box,
+  Card,
+  CardContent,
+  TextField,
+  Button,
+  Typography,
+  Alert,
+  MenuItem,
+  CircularProgress,
+} from '@mui/material'
+import { GroupAdd } from '@mui/icons-material'
 
 const API_URL = 'http://localhost:8000/api'
 
@@ -51,7 +63,7 @@ function CreateGroup({ user, onGroupCreated }) {
         setFormData({ name: '', description: '', prep_type: 'FAANG' })
         onGroupCreated()
       } else {
-        setError(data.error || 'Failed to create group')
+        setError(data.error || data.detail || 'Failed to create group')
       }
     } catch (err) {
       setError('Failed to connect to server')
@@ -61,59 +73,74 @@ function CreateGroup({ user, onGroupCreated }) {
   }
 
   return (
-    <div className="create-group">
-      <h2>Create a New Study Group</h2>
+    <Box sx={{ maxWidth: 700, mx: 'auto' }}>
+      <Card>
+        <CardContent sx={{ p: 4 }}>
+          <Typography variant="h5" component="h2" gutterBottom sx={{ mb: 3 }}>
+            Create a New Study Group
+          </Typography>
 
-      <form onSubmit={handleSubmit} className="group-form">
-        <div className="form-group">
-          <label htmlFor="name">Group Name *</label>
-          <input
-            type="text"
-            id="name"
-            name="name"
-            value={formData.name}
-            onChange={handleChange}
-            placeholder="e.g., Morning FAANG Prep Squad"
-            required
-          />
-        </div>
+          <Box component="form" onSubmit={handleSubmit} sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+            <TextField
+              fullWidth
+              label="Group Name"
+              name="name"
+              value={formData.name}
+              onChange={handleChange}
+              placeholder="e.g., Morning FAANG Prep Squad"
+              required
+              variant="outlined"
+            />
 
-        <div className="form-group">
-          <label htmlFor="prep_type">Preparation Type *</label>
-          <select
-            id="prep_type"
-            name="prep_type"
-            value={formData.prep_type}
-            onChange={handleChange}
-            required
-          >
-            {PREP_TYPES.map(type => (
-              <option key={type.value} value={type.value}>
-                {type.label}
-              </option>
-            ))}
-          </select>
-        </div>
+            <TextField
+              fullWidth
+              select
+              label="Preparation Type"
+              name="prep_type"
+              value={formData.prep_type}
+              onChange={handleChange}
+              required
+              variant="outlined"
+            >
+              {PREP_TYPES.map((type) => (
+                <MenuItem key={type.value} value={type.value}>
+                  {type.label}
+                </MenuItem>
+              ))}
+            </TextField>
 
-        <div className="form-group">
-          <label htmlFor="description">Description</label>
-          <textarea
-            id="description"
-            name="description"
-            value={formData.description}
-            onChange={handleChange}
-            placeholder="Tell others about your study group..."
-            rows="4"
-          />
-        </div>
+            <TextField
+              fullWidth
+              label="Description"
+              name="description"
+              value={formData.description}
+              onChange={handleChange}
+              placeholder="Tell others about your study group..."
+              multiline
+              rows={4}
+              variant="outlined"
+            />
 
-        {error && <div className="error-message">{error}</div>}
+            {error && (
+              <Alert severity="error">
+                {error}
+              </Alert>
+            )}
 
-        <button type="submit" className="btn-primary" disabled={loading}>
-          {loading ? 'Creating...' : 'Create Group'}
-        </button>
-      </form>
-    </div>
+            <Button
+              type="submit"
+              variant="contained"
+              size="large"
+              disabled={loading}
+              startIcon={loading ? <CircularProgress size={20} /> : <GroupAdd />}
+              sx={{ py: 1.5 }}
+            >
+              {loading ? 'Creating...' : 'Create Group'}
+            </Button>
+          </Box>
+        </CardContent>
+      </Card>
+    </Box>
   )
 }
 

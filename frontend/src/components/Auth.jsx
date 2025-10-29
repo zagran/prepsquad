@@ -1,4 +1,16 @@
 import { useState } from 'react'
+import {
+  Box,
+  Card,
+  CardContent,
+  TextField,
+  Button,
+  Typography,
+  Alert,
+  Link,
+  CircularProgress,
+} from '@mui/material'
+import { Login as LoginIcon, PersonAdd } from '@mui/icons-material'
 
 const API_URL = 'http://localhost:8000/api'
 
@@ -44,7 +56,7 @@ function Auth({ setUser }) {
       if (response.ok) {
         setUser(data.user)
       } else {
-        setError(data.error || 'Something went wrong')
+        setError(data.error || data.detail || 'Something went wrong')
       }
     } catch (err) {
       setError('Failed to connect to server')
@@ -54,69 +66,91 @@ function Auth({ setUser }) {
   }
 
   return (
-    <div className="auth-container">
-      <div className="auth-card">
-        <h2>{isLogin ? 'Login' : 'Register'}</h2>
+    <Box
+      sx={{
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        minHeight: '60vh',
+      }}
+    >
+      <Card sx={{ maxWidth: 450, width: '100%', mx: 2 }}>
+        <CardContent sx={{ p: 4 }}>
+          <Typography variant="h4" component="h2" align="center" gutterBottom sx={{ mb: 3 }}>
+            {isLogin ? 'Login' : 'Register'}
+          </Typography>
 
-        <form onSubmit={handleSubmit} className="auth-form">
-          {!isLogin && (
-            <div className="form-group">
-              <label htmlFor="name">Name</label>
-              <input
-                type="text"
-                id="name"
+          <Box component="form" onSubmit={handleSubmit} sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+            {!isLogin && (
+              <TextField
+                fullWidth
+                label="Name"
                 name="name"
                 value={formData.name}
                 onChange={handleChange}
                 required={!isLogin}
+                variant="outlined"
               />
-            </div>
-          )}
+            )}
 
-          <div className="form-group">
-            <label htmlFor="email">Email</label>
-            <input
-              type="email"
-              id="email"
+            <TextField
+              fullWidth
+              label="Email"
               name="email"
+              type="email"
               value={formData.email}
               onChange={handleChange}
               required
+              variant="outlined"
             />
-          </div>
 
-          <div className="form-group">
-            <label htmlFor="password">Password</label>
-            <input
-              type="password"
-              id="password"
+            <TextField
+              fullWidth
+              label="Password"
               name="password"
+              type="password"
               value={formData.password}
               onChange={handleChange}
               required
+              variant="outlined"
             />
-          </div>
 
-          {error && <div className="error-message">{error}</div>}
+            {error && (
+              <Alert severity="error" sx={{ mt: 1 }}>
+                {error}
+              </Alert>
+            )}
 
-          <button type="submit" className="btn-primary" disabled={loading}>
-            {loading ? 'Processing...' : isLogin ? 'Login' : 'Register'}
-          </button>
-        </form>
+            <Button
+              type="submit"
+              variant="contained"
+              size="large"
+              fullWidth
+              disabled={loading}
+              startIcon={loading ? <CircularProgress size={20} /> : isLogin ? <LoginIcon /> : <PersonAdd />}
+              sx={{ mt: 2, py: 1.5 }}
+            >
+              {loading ? 'Processing...' : isLogin ? 'Login' : 'Register'}
+            </Button>
 
-        <div className="auth-switch">
-          <button
-            onClick={() => {
-              setIsLogin(!isLogin)
-              setError('')
-            }}
-            className="btn-link"
-          >
-            {isLogin ? "Don't have an account? Register" : "Already have an account? Login"}
-          </button>
-        </div>
-      </div>
-    </div>
+            <Box sx={{ textAlign: 'center', mt: 2 }}>
+              <Link
+                component="button"
+                type="button"
+                variant="body2"
+                onClick={() => {
+                  setIsLogin(!isLogin)
+                  setError('')
+                }}
+                sx={{ cursor: 'pointer' }}
+              >
+                {isLogin ? "Don't have an account? Register" : "Already have an account? Login"}
+              </Link>
+            </Box>
+          </Box>
+        </CardContent>
+      </Card>
+    </Box>
   )
 }
 

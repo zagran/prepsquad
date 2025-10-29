@@ -1,41 +1,41 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
+import { Box, Tabs, Tab, Paper } from '@mui/material'
+import { Search, Add } from '@mui/icons-material'
 import CreateGroup from './CreateGroup'
 import GroupList from './GroupList'
 
 function Dashboard({ user }) {
-  const [activeTab, setActiveTab] = useState('browse')
+  const [activeTab, setActiveTab] = useState(0)
   const [refreshTrigger, setRefreshTrigger] = useState(0)
 
   const handleGroupCreated = () => {
     setRefreshTrigger(prev => prev + 1)
-    setActiveTab('browse')
+    setActiveTab(0)
   }
 
   return (
-    <div className="dashboard">
-      <div className="dashboard-tabs">
-        <button
-          className={`tab ${activeTab === 'browse' ? 'active' : ''}`}
-          onClick={() => setActiveTab('browse')}
+    <Box>
+      <Paper sx={{ mb: 3 }}>
+        <Tabs
+          value={activeTab}
+          onChange={(e, newValue) => setActiveTab(newValue)}
+          indicatorColor="primary"
+          textColor="primary"
+          variant="fullWidth"
         >
-          Browse Groups
-        </button>
-        <button
-          className={`tab ${activeTab === 'create' ? 'active' : ''}`}
-          onClick={() => setActiveTab('create')}
-        >
-          Create Group
-        </button>
-      </div>
+          <Tab icon={<Search />} label="Browse Groups" iconPosition="start" />
+          <Tab icon={<Add />} label="Create Group" iconPosition="start" />
+        </Tabs>
+      </Paper>
 
-      <div className="dashboard-content">
-        {activeTab === 'browse' ? (
+      <Box sx={{ mt: 3 }}>
+        {activeTab === 0 ? (
           <GroupList user={user} refreshTrigger={refreshTrigger} />
         ) : (
           <CreateGroup user={user} onGroupCreated={handleGroupCreated} />
         )}
-      </div>
-    </div>
+      </Box>
+    </Box>
   )
 }
 
