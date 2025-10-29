@@ -11,6 +11,7 @@ import {
   CircularProgress,
 } from '@mui/material'
 import { GroupAdd } from '@mui/icons-material'
+import { fetchWithAuth } from '../utils/auth'
 
 const API_URL = 'http://localhost:8000/api'
 
@@ -46,15 +47,9 @@ function CreateGroup({ user, onGroupCreated }) {
     setError('')
 
     try {
-      const response = await fetch(`${API_URL}/groups`, {
+      const response = await fetchWithAuth(`${API_URL}/groups`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          ...formData,
-          user_id: user.id
-        })
+        body: JSON.stringify(formData)
       })
 
       const data = await response.json()
@@ -66,7 +61,7 @@ function CreateGroup({ user, onGroupCreated }) {
         setError(data.error || data.detail || 'Failed to create group')
       }
     } catch (err) {
-      setError('Failed to connect to server')
+      setError(err.message || 'Failed to connect to server')
     } finally {
       setLoading(false)
     }

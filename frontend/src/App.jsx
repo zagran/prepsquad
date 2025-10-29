@@ -1,9 +1,12 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { ThemeProvider, createTheme } from '@mui/material/styles'
-import { CssBaseline, AppBar, Toolbar, Typography, Button, Container, Box } from '@mui/material'
+import { CssBaseline, AppBar, Toolbar, Typography, Button, Container, Box, CircularProgress } from '@mui/material'
 import { Logout } from '@mui/icons-material'
 import Auth from './components/Auth'
 import Dashboard from './components/Dashboard'
+import { clearTokens, isAuthenticated, getAuthHeaders } from './utils/auth'
+
+const API_URL = 'http://localhost:8000/api'
 
 const theme = createTheme({
   palette: {
@@ -50,9 +53,49 @@ const theme = createTheme({
 
 function App() {
   const [user, setUser] = useState(null)
+  const [loading, setLoading] = useState(true)
+
+  // Check if user is already authenticated on mount
+  useEffect(() => {
+    const checkAuth = async () => {
+      if (isAuthenticated()) {
+        try {
+          const response = await fetch(`${API_URL}/auth/me`, {
+            headers: getAuthHeaders()
+          })
+
+          if (response.ok) {
+            const data = await response.json()
+            setUser(data.user)
+          } else {
+            // Token is invalid, clear it
+            clearTokens()
+          }
+        } catch (error) {
+          console.error('Failed to fetch user:', error)
+          clearTokens()
+        }
+      }
+      setLoading(false)
+    }
+
+    checkAuth()
+  }, [])
 
   const handleLogout = () => {
+    clearTokens()
     setUser(null)
+  }
+
+  if (loading) {
+    return (
+      <ThemeProvider theme={theme}>
+        <CssBaseline />
+        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh' }}>
+          <CircularProgress />
+        </Box>
+      </ThemeProvider>
+    )
   }
 
   return (

@@ -16,6 +16,7 @@ import {
   Alert,
 } from '@mui/material'
 import { People, Check, GroupAdd } from '@mui/icons-material'
+import { fetchWithAuth } from '../utils/auth'
 
 const API_URL = 'http://localhost:8000/api'
 
@@ -48,7 +49,7 @@ function GroupList({ user, refreshTrigger }) {
         ? `${API_URL}/groups`
         : `${API_URL}/groups?prep_type=${filter}`
 
-      const response = await fetch(url)
+      const response = await fetchWithAuth(url)
       const data = await response.json()
 
       if (response.ok) {
@@ -57,7 +58,7 @@ function GroupList({ user, refreshTrigger }) {
         setError('Failed to load groups')
       }
     } catch (err) {
-      setError('Failed to connect to server')
+      setError(err.message || 'Failed to connect to server')
     } finally {
       setLoading(false)
     }
@@ -67,12 +68,8 @@ function GroupList({ user, refreshTrigger }) {
     setJoiningGroup(groupId)
 
     try {
-      const response = await fetch(`${API_URL}/groups/${groupId}/join`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ user_id: user.id })
+      const response = await fetchWithAuth(`${API_URL}/groups/${groupId}/join`, {
+        method: 'POST'
       })
 
       const data = await response.json()
@@ -83,7 +80,7 @@ function GroupList({ user, refreshTrigger }) {
         alert(data.error || data.detail || 'Failed to join group')
       }
     } catch (err) {
-      alert('Failed to connect to server')
+      alert(err.message || 'Failed to connect to server')
     } finally {
       setJoiningGroup(null)
     }

@@ -11,6 +11,7 @@ import {
   CircularProgress,
 } from '@mui/material'
 import { Login as LoginIcon, PersonAdd } from '@mui/icons-material'
+import { setTokens } from '../utils/auth'
 
 const API_URL = 'http://localhost:8000/api'
 
@@ -54,6 +55,8 @@ function Auth({ setUser }) {
       const data = await response.json()
 
       if (response.ok) {
+        // Store JWT token(s)
+        setTokens(data.access_token, data.refresh_token || null)
         setUser(data.user)
       } else {
         setError(data.error || data.detail || 'Something went wrong')
