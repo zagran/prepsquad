@@ -1,0 +1,63 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: PrepSquad Backend API
+
+Globals:
+  Function:
+    Timeout: 30
+    Runtime: python3.12
+    MemorySize: 512
+    Environment:
+      Variables:
+        ENV: production
+        PYTHONUNBUFFERED: "1"
+
+Resources:
+  PrepSquadAPI:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: prepsquad-api
+      CodeUri: .
+      Handler: lambda_handler.handler
+      Description: PrepSquad FastAPI backend
+      Architectures:
+        - x86_64
+      Events:
+        ApiEvent:
+          Type: HttpApi
+          Properties:
+            Path: /{proxy+}
+            Method: ANY
+            PayloadFormatVersion: "2.0"
+            CorsConfiguration:
+              AllowOrigins:
+                - "*"  # Update with your CloudFront URL in production
+              AllowHeaders:
+                - "*"
+              AllowMethods:
+                - GET
+                - POST
+                - PUT
+                - DELETE
+                - OPTIONS
+              MaxAge: 300
+
+  # CloudWatch Logs
+  PrepSquadAPILogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub "/aws/lambda/${PrepSquadAPI}"
+      RetentionInDays: 7
+
+Outputs:
+  ApiUrl:
+    Description: "API Gateway endpoint URL"
+    Value: !Sub "https://${ServerlessHttpApi}.execute-api.${AWS::Region}.amazonaws.com/"
+    Export:
+      Name: PrepSquadApiUrl
+
+  FunctionArn:
+    Description: "Lambda Function ARN"
+    Value: !GetAtt PrepSquadAPI.Arn
+    Export:
+      Name: PrepSquadFunctionArn

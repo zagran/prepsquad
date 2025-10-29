@@ -93,6 +93,65 @@ prepsquad/
 
    The frontend will be available at `http://localhost:5173`
 
+## Docker Setup (Recommended for Local Development)
+
+The easiest way to run the application is using Docker Compose:
+
+### Prerequisites
+- Docker Desktop installed
+- Docker Compose (included with Docker Desktop)
+
+### Quick Start
+
+1. **Start both services with one command:**
+   ```bash
+   docker compose up
+   ```
+
+   Or run in detached mode:
+   ```bash
+   docker compose up -d
+   ```
+
+2. **Access the application:**
+   - Frontend: http://localhost:5173
+   - Backend API: http://localhost:8000
+   - API Docs: http://localhost:8000/docs
+
+3. **Stop the services:**
+   ```bash
+   docker compose down
+   ```
+
+### Docker Commands
+
+```bash
+# Build images
+docker compose build
+
+# View logs
+docker compose logs -f
+
+# Restart a specific service
+docker compose restart backend
+docker compose restart frontend
+
+# Execute commands in containers
+docker compose exec backend python -c "print('Hello')"
+docker compose exec frontend npm run build
+
+# Remove volumes (reset data)
+docker compose down -v
+```
+
+### Benefits of Docker Setup
+
+- No need to install Node.js or Python locally
+- Consistent development environment
+- Hot reload enabled for both frontend and backend
+- Easy to share and onboard new developers
+- Isolated dependencies
+
 ## Usage
 
 1. Open your browser and go to `http://localhost:5173`
@@ -142,6 +201,41 @@ In production, consider:
 - Implement rate limiting
 - Add error logging
 - Deploy with proper HTTPS
+
+## AWS Deployment
+
+This application is designed to be deployed on AWS:
+
+- **Frontend**: S3 + CloudFront (static hosting)
+- **Backend**: API Gateway + Lambda (serverless)
+
+For detailed deployment instructions, see [AWS_DEPLOYMENT.md](./AWS_DEPLOYMENT.md)
+
+### Quick Deploy to AWS
+
+**Backend (Lambda):**
+```bash
+cd backend
+pip install -r requirements.txt -t package/
+cp *.py package/
+cd package && zip -r ../lambda.zip . && cd ..
+# Upload lambda.zip to AWS Lambda
+```
+
+**Frontend (S3):**
+```bash
+cd frontend
+npm run build
+aws s3 sync dist/ s3://your-bucket-name/
+```
+
+### Architecture Benefits
+
+- **Scalability**: Auto-scales with traffic
+- **Cost-Effective**: Pay only for what you use
+- **High Availability**: Global CDN with CloudFront
+- **Performance**: Edge locations worldwide
+- **Security**: HTTPS, WAF, DDoS protection
 
 ## License
 
