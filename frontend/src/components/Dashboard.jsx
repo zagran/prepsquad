@@ -1,9 +1,10 @@
 import { useState } from 'react'
 import { Box, Tabs, Tab, Paper } from '@mui/material'
-import { Search, Add, Person } from '@mui/icons-material'
+import { Search, Add, Person, Settings } from '@mui/icons-material'
 import CreateGroup from './CreateGroup'
 import GroupList from './GroupList'
 import Profile from './Profile'
+import ManageGroup from './ManageGroup'
 
 function Dashboard({ user }) {
   const [activeTab, setActiveTab] = useState(0)
@@ -26,6 +27,7 @@ function Dashboard({ user }) {
         >
           <Tab icon={<Search />} label="Browse Groups" iconPosition="start" />
           <Tab icon={<Add />} label="Create Group" iconPosition="start" />
+          <Tab icon={<Settings />} label="Manage Groups" iconPosition="start" />
           <Tab icon={<Person />} label="My Profile" iconPosition="start" />
         </Tabs>
       </Paper>
@@ -35,6 +37,8 @@ function Dashboard({ user }) {
           <GroupList user={user} refreshTrigger={refreshTrigger} />
         ) : activeTab === 1 ? (
           <CreateGroup user={user} onGroupCreated={handleGroupCreated} />
+        ) : activeTab === 2 ? (
+          <ManageGroup user={user} />
         ) : (
           <Profile user={user} />
         )}

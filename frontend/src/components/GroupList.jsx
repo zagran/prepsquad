@@ -14,8 +14,10 @@ import {
   Chip,
   CircularProgress,
   Alert,
+  Divider,
+  Stack,
 } from '@mui/material'
-import { People, Check, GroupAdd } from '@mui/icons-material'
+import { People, Check, GroupAdd, Schedule, Public, CalendarMonth, HourglassEmpty } from '@mui/icons-material'
 import { fetchWithAuth } from '../utils/auth'
 
 const API_URL = 'http://localhost:8000/api'
@@ -87,7 +89,28 @@ function GroupList({ user, refreshTrigger }) {
   }
 
   const isUserInGroup = (group) => {
-    return group.members.includes(user.id)
+    return group.final_members?.includes(user.id) || group.members?.includes(user.id)
+  }
+
+  const isUserPending = (group) => {
+    return group.pending_members?.includes(user.id)
+  }
+
+  const getStatusChip = (group) => {
+    const status = group.registration_status || 'open'
+    const colors = {
+      'open': 'success',
+      'closed': 'default',
+      'full': 'error'
+    }
+    return (
+      <Chip
+        label={status.toUpperCase()}
+        color={colors[status]}
+        size="small"
+        sx={{ fontSize: '0.65rem' }}
+      />
+    )
   }
 
   return (
@@ -146,16 +169,19 @@ function GroupList({ user, refreshTrigger }) {
                 }}
               >
                 <CardContent sx={{ flexGrow: 1 }}>
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2, gap: 1 }}>
                     <Typography variant="h6" component="h3" sx={{ flexGrow: 1, mr: 1 }}>
                       {group.name}
                     </Typography>
-                    <Chip
-                      label={PREP_TYPE_LABELS[group.prep_type]}
-                      color="primary"
-                      size="small"
-                      sx={{ fontSize: '0.7rem' }}
-                    />
+                    <Stack direction="row" spacing={0.5}>
+                      <Chip
+                        label={PREP_TYPE_LABELS[group.prep_type]}
+                        color="primary"
+                        size="small"
+                        sx={{ fontSize: '0.65rem' }}
+                      />
+                      {getStatusChip(group)}
+                    </Stack>
                   </Box>
 
                   {group.description && (
@@ -163,14 +189,68 @@ function GroupList({ user, refreshTrigger }) {
                       {group.description}
                     </Typography>
                   )}
+
+                  {group.goal && (
+                    <Box sx={{ mb: 1.5 }}>
+                      <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>
+                        Goal:
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        {group.goal}
+                      </Typography>
+                    </Box>
+                  )}
+
+                  {(group.timeline || group.timezone || group.weekly_calls > 0) && (
+                    <>
+                      <Divider sx={{ my: 1.5 }} />
+                      <Stack spacing={0.5}>
+                        {group.timeline && (
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                            <CalendarMonth fontSize="small" sx={{ fontSize: '1rem', color: 'text.secondary' }} />
+                            <Typography variant="caption" color="text.secondary">
+                              {group.timeline}
+                            </Typography>
+                          </Box>
+                        )}
+                        {group.timezone && (
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                            <Public fontSize="small" sx={{ fontSize: '1rem', color: 'text.secondary' }} />
+                            <Typography variant="caption" color="text.secondary">
+                              {group.timezone}
+                            </Typography>
+                          </Box>
+                        )}
+                        {group.weekly_calls > 0 && (
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                            <Schedule fontSize="small" sx={{ fontSize: '1rem', color: 'text.secondary' }} />
+                            <Typography variant="caption" color="text.secondary">
+                              {group.weekly_calls} call{group.weekly_calls > 1 ? 's' : ''}/week
+                              {group.call_time && ` - ${group.call_time}`}
+                            </Typography>
+                          </Box>
+                        )}
+                      </Stack>
+                    </>
+                  )}
                 </CardContent>
 
-                <CardActions sx={{ justifyContent: 'space-between', px: 2, pb: 2, borderTop: 1, borderColor: 'divider' }}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                    <People fontSize="small" color="action" />
-                    <Typography variant="body2" color="text.secondary">
-                      {group.members.length} {group.members.length === 1 ? 'member' : 'members'}
-                    </Typography>
+                <CardActions sx={{ justifyContent: 'space-between', px: 2, pb: 2, borderTop: 1, borderColor: 'divider', flexWrap: 'wrap', gap: 1 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, flexWrap: 'wrap' }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                      <People fontSize="small" color="action" />
+                      <Typography variant="body2" color="text.secondary">
+                        {group.final_members?.length || group.members?.length || 0}/{group.max_members || 10}
+                      </Typography>
+                    </Box>
+                    {group.pending_members && group.pending_members.length > 0 && (
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                        <HourglassEmpty fontSize="small" color="action" sx={{ fontSize: '1rem' }} />
+                        <Typography variant="caption" color="text.secondary">
+                          {group.pending_members.length} pending
+                        </Typography>
+                      </Box>
+                    )}
                   </Box>
 
                   {isUserInGroup(group) ? (
@@ -180,15 +260,22 @@ function GroupList({ user, refreshTrigger }) {
                       size="small"
                       icon={<Check />}
                     />
+                  ) : isUserPending(group) ? (
+                    <Chip
+                      label="Pending Approval"
+                      color="warning"
+                      size="small"
+                      icon={<HourglassEmpty />}
+                    />
                   ) : (
                     <Button
                       size="small"
                       variant="contained"
                       onClick={() => handleJoinGroup(group.id)}
-                      disabled={joiningGroup === group.id}
+                      disabled={joiningGroup === group.id || group.registration_status === 'full' || group.registration_status === 'closed'}
                       startIcon={joiningGroup === group.id ? <CircularProgress size={16} /> : <GroupAdd />}
                     >
-                      {joiningGroup === group.id ? 'Joining...' : 'Join'}
+                      {joiningGroup === group.id ? 'Requesting...' : 'Request to Join'}
                     </Button>
                   )}
                 </CardActions>

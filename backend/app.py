@@ -103,6 +103,13 @@ class CreateGroup(BaseModel):
     name: str
     description: Optional[str] = ""
     prep_type: str
+    goal: Optional[str] = ""
+    timeline: Optional[str] = ""
+    requirements: Optional[str] = ""
+    timezone: Optional[str] = ""
+    weekly_calls: Optional[int] = 0
+    call_time: Optional[str] = ""
+    max_members: Optional[int] = 10
 
 class GroupResponse(BaseModel):
     id: str
@@ -110,7 +117,16 @@ class GroupResponse(BaseModel):
     description: str
     prep_type: str
     creator_id: str
-    members: List[str]
+    goal: str
+    timeline: str
+    requirements: str
+    timezone: str
+    weekly_calls: int
+    call_time: str
+    max_members: int
+    pending_members: List[str]
+    final_members: List[str]
+    registration_status: str  # "open", "closed", "full"
     created_at: str
 
 class UserProfileUpdate(BaseModel):
@@ -219,7 +235,16 @@ async def create_group(group_data: CreateGroup, current_user: dict = Depends(get
         "description": group_data.description or "",
         "prep_type": group_data.prep_type,
         "creator_id": user_id,
-        "members": [user_id],
+        "goal": group_data.goal or "",
+        "timeline": group_data.timeline or "",
+        "requirements": group_data.requirements or "",
+        "timezone": group_data.timezone or "",
+        "weekly_calls": group_data.weekly_calls or 0,
+        "call_time": group_data.call_time or "",
+        "max_members": group_data.max_members or 10,
+        "pending_members": [],
+        "final_members": [user_id],  # Creator is automatically a final member
+        "registration_status": "open",
         "created_at": datetime.now().isoformat()
     }
 
@@ -237,7 +262,7 @@ async def get_groups(prep_type: Optional[str] = Query(None), current_user: dict 
 
     return {"groups": filtered_groups}
 
-# Join a group
+# Join a group (as pending member)
 @app.post("/api/groups/{group_id}/join")
 async def join_group(group_id: str, current_user: dict = Depends(get_current_user)):
     group = groups.get(group_id)
@@ -245,11 +270,91 @@ async def join_group(group_id: str, current_user: dict = Depends(get_current_use
         raise HTTPException(status_code=404, detail="Group not found")
 
     user_id = current_user["id"]
-    if user_id not in group['members']:
-        group['members'].append(user_id)
+
+    # Check if registration is closed or full
+    if group.get('registration_status') == 'closed':
+        raise HTTPException(status_code=400, detail="Group registration is closed")
+
+    # Check if already a member or pending
+    if user_id in group.get('final_members', []):
+        raise HTTPException(status_code=400, detail="Already a final member of this group")
+
+    if user_id in group.get('pending_members', []):
+        raise HTTPException(status_code=400, detail="Already requested to join this group")
+
+    # Check if group is full
+    max_members = group.get('max_members', 10)
+    current_final_count = len(group.get('final_members', []))
+    if current_final_count >= max_members:
+        group['registration_status'] = 'full'
+        raise HTTPException(status_code=400, detail="Group is full")
+
+    # Add to pending members
+    if 'pending_members' not in group:
+        group['pending_members'] = []
+    group['pending_members'].append(user_id)
 
     return {
-        "message": "Joined group successfully",
+        "message": "Join request submitted. Waiting for admin approval.",
+        "group": group
+    }
+
+# Approve a pending member (only creator can approve)
+@app.post("/api/groups/{group_id}/approve/{user_id}")
+async def approve_member(group_id: str, user_id: str, current_user: dict = Depends(get_current_user)):
+    group = groups.get(group_id)
+    if not group:
+        raise HTTPException(status_code=404, detail="Group not found")
+
+    # Only creator can approve
+    if current_user["id"] != group["creator_id"]:
+        raise HTTPException(status_code=403, detail="Only group creator can approve members")
+
+    # Check if user is in pending list
+    if user_id not in group.get('pending_members', []):
+        raise HTTPException(status_code=400, detail="User is not in pending list")
+
+    # Check if group is full
+    max_members = group.get('max_members', 10)
+    current_final_count = len(group.get('final_members', []))
+    if current_final_count >= max_members:
+        raise HTTPException(status_code=400, detail="Group is full")
+
+    # Move from pending to final
+    group['pending_members'].remove(user_id)
+    if 'final_members' not in group:
+        group['final_members'] = []
+    group['final_members'].append(user_id)
+
+    # Update registration status if full
+    if len(group['final_members']) >= max_members:
+        group['registration_status'] = 'full'
+
+    return {
+        "message": "Member approved successfully",
+        "group": group
+    }
+
+# Reject a pending member (only creator can reject)
+@app.post("/api/groups/{group_id}/reject/{user_id}")
+async def reject_member(group_id: str, user_id: str, current_user: dict = Depends(get_current_user)):
+    group = groups.get(group_id)
+    if not group:
+        raise HTTPException(status_code=404, detail="Group not found")
+
+    # Only creator can reject
+    if current_user["id"] != group["creator_id"]:
+        raise HTTPException(status_code=403, detail="Only group creator can reject members")
+
+    # Check if user is in pending list
+    if user_id not in group.get('pending_members', []):
+        raise HTTPException(status_code=400, detail="User is not in pending list")
+
+    # Remove from pending
+    group['pending_members'].remove(user_id)
+
+    return {
+        "message": "Member rejected successfully",
         "group": group
     }
 

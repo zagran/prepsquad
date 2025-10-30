@@ -4,13 +4,30 @@ A simple web application for creating and joining study groups for interview pre
 
 ## Features
 
+### User Management
 - User registration and authentication with JWT
-- Create study groups with different preparation types
-- Browse and filter available groups
-- Join existing study groups
-- Track group membership
 - User profiles with bio, skills, and preparation goals
 - Social links (LinkedIn, GitHub)
+- Avatar support
+
+### Group Management
+- Create study groups with comprehensive details:
+  - Group name, description, and preparation type
+  - Group goal and timeline
+  - Requirements for candidates
+  - Primary timezone
+  - Weekly call schedule and timing
+  - Maximum member limit
+- Browse and filter available groups by preparation type
+- View detailed group information (goal, timeline, timezone, calls, etc.)
+- Request to join groups (pending approval workflow)
+- Group registration status (open, closed, full)
+
+### Group Admin Features
+- Approve or reject pending member requests
+- View pending and final members
+- Manage group capacity
+- Track group registration status
 
 ## Tech Stack
 
@@ -171,8 +188,10 @@ docker compose down -v
 
 ### Groups
 - `GET /api/groups` - Get all groups (optional query param: `prep_type`)
-- `POST /api/groups` - Create a new group
-- `POST /api/groups/:id/join` - Join a group
+- `POST /api/groups` - Create a new group with detailed information
+- `POST /api/groups/:id/join` - Request to join a group (adds to pending members)
+- `POST /api/groups/:group_id/approve/:user_id` - Approve a pending member (creator only)
+- `POST /api/groups/:group_id/reject/:user_id` - Reject a pending member (creator only)
 
 ### User Profiles
 - `GET /api/users/:user_id/profile` - View any user's profile
@@ -185,12 +204,18 @@ docker compose down -v
 
 - Add database persistence (PostgreSQL/MongoDB)
 - Add real-time chat for groups
-- Schedule study sessions
-- Implement group admin features
-- Add email notifications
-- Add ability to view other members' profiles within groups
-- Add profile completion percentage
-- Add user activity feed
+- Schedule study sessions with calendar integration
+- Email notifications for join requests and approvals
+- View other members' profiles within groups
+- Profile completion percentage indicator
+- User activity feed
+- Group discussion boards
+- Progress tracking and milestones
+- Video call integration
+- Resource sharing within groups
+- Remove members from groups
+- Close/reopen group registration
+- Search functionality for groups
 
 ## Notes
 
