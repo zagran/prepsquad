@@ -113,6 +113,26 @@ class GroupResponse(BaseModel):
     members: List[str]
     created_at: str
 
+class UserProfileUpdate(BaseModel):
+    bio: Optional[str] = ""
+    avatar_url: Optional[str] = ""
+    skills: Optional[List[str]] = []
+    prep_goals: Optional[List[str]] = []
+    linkedin_url: Optional[str] = ""
+    github_url: Optional[str] = ""
+
+class UserProfileResponse(BaseModel):
+    id: str
+    email: str
+    name: str
+    bio: str
+    avatar_url: str
+    skills: List[str]
+    prep_goals: List[str]
+    linkedin_url: str
+    github_url: str
+    created_at: str
+
 # Health check endpoint
 @app.get("/api/health")
 async def health_check():
@@ -132,6 +152,12 @@ async def register(user_data: UserRegister):
         "email": user_data.email,
         "name": user_data.name,
         "password": hashed_password,
+        "bio": "",
+        "avatar_url": "",
+        "skills": [],
+        "prep_goals": [],
+        "linkedin_url": "",
+        "github_url": "",
         "created_at": datetime.now().isoformat()
     }
 
@@ -225,6 +251,72 @@ async def join_group(group_id: str, current_user: dict = Depends(get_current_use
     return {
         "message": "Joined group successfully",
         "group": group
+    }
+
+# Get user profile by user ID
+@app.get("/api/users/{user_id}/profile")
+async def get_user_profile(user_id: str, current_user: dict = Depends(get_current_user)):
+    # Find user by ID
+    target_user = None
+    for user in users.values():
+        if user["id"] == user_id:
+            target_user = user
+            break
+
+    if not target_user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    # Return profile without password
+    return {
+        "profile": {
+            "id": target_user["id"],
+            "email": target_user["email"],
+            "name": target_user["name"],
+            "bio": target_user.get("bio", ""),
+            "avatar_url": target_user.get("avatar_url", ""),
+            "skills": target_user.get("skills", []),
+            "prep_goals": target_user.get("prep_goals", []),
+            "linkedin_url": target_user.get("linkedin_url", ""),
+            "github_url": target_user.get("github_url", ""),
+            "created_at": target_user["created_at"]
+        }
+    }
+
+# Update current user's profile
+@app.put("/api/users/profile")
+async def update_profile(profile_data: UserProfileUpdate, current_user: dict = Depends(get_current_user)):
+    user_email = current_user["email"]
+
+    # Update profile fields
+    if profile_data.bio is not None:
+        users[user_email]["bio"] = profile_data.bio
+    if profile_data.avatar_url is not None:
+        users[user_email]["avatar_url"] = profile_data.avatar_url
+    if profile_data.skills is not None:
+        users[user_email]["skills"] = profile_data.skills
+    if profile_data.prep_goals is not None:
+        users[user_email]["prep_goals"] = profile_data.prep_goals
+    if profile_data.linkedin_url is not None:
+        users[user_email]["linkedin_url"] = profile_data.linkedin_url
+    if profile_data.github_url is not None:
+        users[user_email]["github_url"] = profile_data.github_url
+
+    # Return updated profile
+    updated_user = users[user_email]
+    return {
+        "message": "Profile updated successfully",
+        "profile": {
+            "id": updated_user["id"],
+            "email": updated_user["email"],
+            "name": updated_user["name"],
+            "bio": updated_user["bio"],
+            "avatar_url": updated_user["avatar_url"],
+            "skills": updated_user["skills"],
+            "prep_goals": updated_user["prep_goals"],
+            "linkedin_url": updated_user["linkedin_url"],
+            "github_url": updated_user["github_url"],
+            "created_at": updated_user["created_at"]
+        }
     }
 
 if __name__ == '__main__':

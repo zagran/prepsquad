@@ -4,11 +4,13 @@ A simple web application for creating and joining study groups for interview pre
 
 ## Features
 
-- User registration and authentication
+- User registration and authentication with JWT
 - Create study groups with different preparation types
 - Browse and filter available groups
 - Join existing study groups
 - Track group membership
+- User profiles with bio, skills, and preparation goals
+- Social links (LinkedIn, GitHub)
 
 ## Tech Stack
 
@@ -165,11 +167,16 @@ docker compose down -v
 ### Authentication
 - `POST /api/auth/register` - Register a new user
 - `POST /api/auth/login` - Login user
+- `GET /api/auth/me` - Get current user info
 
 ### Groups
 - `GET /api/groups` - Get all groups (optional query param: `prep_type`)
 - `POST /api/groups` - Create a new group
 - `POST /api/groups/:id/join` - Join a group
+
+### User Profiles
+- `GET /api/users/:user_id/profile` - View any user's profile
+- `PUT /api/users/profile` - Update your own profile
 
 ### Health Check
 - `GET /api/health` - Check API status
@@ -177,13 +184,13 @@ docker compose down -v
 ## Future Enhancements
 
 - Add database persistence (PostgreSQL/MongoDB)
-- Implement JWT authentication
 - Add real-time chat for groups
 - Schedule study sessions
-- Add user profiles
 - Implement group admin features
 - Add email notifications
-- Password hashing and security improvements
+- Add ability to view other members' profiles within groups
+- Add profile completion percentage
+- Add user activity feed
 
 ## Notes
 
